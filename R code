@@ -1,0 +1,63 @@
+GM <- function(x,adv=0) {
+  x0 <- x
+  k = length(x0) 
+  # AGO
+  x1 = cumsum(x0)
+  # construct matrix B & Y
+  B = cbind(-0.5*(x1[-k]+x1[-1]),rep(1,times=k-1))
+  Y = x0[-1]
+  # compute BtB...
+  BtB = t(B)%*%B
+  BtB.inv = solve(BtB)
+  BtY = t(B)%*%Y
+  
+  # estimate
+  alpha = BtB.inv%*%BtY
+  # estimate
+  predict <- function(k) {
+    y = (x0[1] - alpha[2]/alpha[1])*exp(-alpha[1]*k)+alpha[2]/alpha[1]
+    return(y)
+  }
+  pre <- sapply(X=0:(k-1),FUN=predict)
+  prediff <- c(pre[1],diff(pre))
+  
+  # Accuracy test
+  # Residual
+  error <- x0-prediff
+  
+  # Residual mean square error      
+  s2 = sqrt(sum((abs(error)-mean(abs(error)))^2/(length(error)-1)))
+
+  # Monotone sequence mean square error
+  s1 = sqrt(sum((x0-mean(x0))^2)/(length(x0)-1))
+  # Variance ratio
+  C = s2/s1
+  # Small residual error probability
+  p = sum((abs(abs(error)-mean(abs(error))))<0.6745*s1)/length(error)
+  
+  # RE
+  RE = numeric(length = length(x0))
+  for (i in 1:length(x0)) {
+    RE[i] = (abs(x0[i]-prediff[i])/x0[i])
+  }
+  ARE = mean(RE)
+  result <- list(actual = x0,
+                 fit = prediff,
+                 a = alpha[1],
+                 b =alpha[2],
+                 C = C,
+                 P = p,
+                 RE = RE,
+                 ARE = ARE)
+  
+  # estimate: k+adv
+  if (adv > 0) {
+    pre.adv = numeric(adv)
+    for (i in 1:adv) {
+      pre.adv[i] <- predict(k-1+i)-predict(k-2+i)
+    }
+    result$predict <- pre.adv
+  }
+  class(result) <- 'GM1.1'
+  return(result)
+}
