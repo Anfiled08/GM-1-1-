@@ -61,3 +61,7 @@ GM <- function(x,adv=0) {
   class(result) <- 'GM1.1'
   return(result)
 }
+# 案例
+x = c(1,2,3,4,5,6,7,8)
+GM(x,2)  # 向后预测两个，默认为零
+
